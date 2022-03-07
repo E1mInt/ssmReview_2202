@@ -1,6 +1,7 @@
 package com.sxau.service;
 
 import com.sxau.bean.Employee;
+import com.sxau.bean.EmployeeExample;
 import com.sxau.dao.EmployeeMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,5 +16,17 @@ public class EmployeeService {
     //查询所有
     public List<Employee> getAll() {
         return employeeMapper.selectByExampleWithDept(null);
+    }
+
+    public void saveEmp(Employee employee) {
+        employeeMapper.insertSelective(employee);
+    }
+
+    public boolean checkUser(String empName) {
+        EmployeeExample employeeExample=new EmployeeExample();
+        EmployeeExample.Criteria criteria = employeeExample.createCriteria();
+        criteria.andEmpNameEqualTo(empName);
+        long count = employeeMapper.countByExample(employeeExample);
+        return count==0;
     }
 }

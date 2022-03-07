@@ -4,117 +4,17 @@
     <title>员工列表</title>
     <script type="text/javascript" src="static/js/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="static/bootstrap-3.4.1-dist/css/bootstrap.css">
-    <script src="static/bootstrap-3.4.1-dist/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="static/bootstrap-3.4.1-dist/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="static/js/indexJs.js"></script>
     <script type="text/javascript">
+        var pages;
         $(function () {
             to_page(1);
         })
-
-        function to_page(pn) {
-            $.ajax({
-                url:"/emps",
-                data:"pn="+pn,
-                type:"get",
-                success:function (result) {
-                    build_emps_table(result);
-                    build_page_info(result);
-                    build_page_nav(result);
-                }
-            })
-        }
-
-        //解析显示表格信息
-        function build_emps_table(result) {
-            $("#emps_table tbody").empty();
-            var emps = result.extend.pageInfo.list;
-            $.each(emps, function (index, item) {
-                var empIdTd = $("<td></td>").append(item.empId);
-                var empNameTd = $("<td></td>").append(item.empName);
-                var genderTd = $("<td></td>").append(item.genger == 'M' ? "男" : "女");
-                var emailTd = $("<td></td>").append(item.email);
-                var deptNameIdTd = $("<td></td>").append(item.department.deptName);
-
-                var editBtn = $("<button></button>").addClass("btn btn-primary btn-sm")
-                    .append("<span></span>").addClass("glyphicon glyphicon-pencil");
-                var delBtn = $("<button></button>").addClass("btn btn-danger btn-sm")
-                    .append("<span></span>").addClass("glyphicon glyphicon-trash");
-                var btn = $("<td></td>").append(editBtn).append(" ").append(delBtn);
-
-                $("<tr></tr>").append(empIdTd)
-                    .append(empNameTd)
-                    .append(genderTd)
-                    .append(emailTd)
-                    .append(deptNameIdTd)
-                    .append(btn)
-                    .appendTo("#emps_table tbody");
-
-            })
-        }
-
-        //解析显示分页信息
-        function build_page_info(result) {
-            $("#page_info_area").empty();
-            $("#page_info_area").append("当前第"+result.extend.pageInfo.pageNum+"页，总"
-                +result.extend.pageInfo.pages+"页，总"
-                +result.extend.pageInfo.total+"条记录");
-        }
-
-        //解析显示分页条
-        function build_page_nav(result) {
-            $("#page_nav_area").empty();
-            var url = $("<ul></ul>").addClass("pagination");
-
-            var firstPageLi = $("<li></li>").append($("<a></a>").append("首页").attr("href","#"));
-            var prePageLi = $("<li></li>").append($("<a></a>").append("&laquo;"));
-            var nextPageLi = $("<li></li>").append($("<a></a>").append("&raquo;"));
-            var lastPageLi = $("<li></li>").append($("<a></a>").append("尾页").attr("href","#"));
-
-            if(result.extend.pageInfo.hasPreviousPage==false){
-                firstPageLi.addClass("disabled");
-                prePageLi.addClass("disabled");
-            }else {
-                firstPageLi.click(function () {
-                    to_page(1);
-                });
-                prePageLi.click(function () {
-                    to_page(result.extend.pageInfo.prePage);
-                });
-            }
-
-            if(result.extend.pageInfo.hasNextPage==false){
-                lastPageLi.addClass("disabled");
-                nextPageLi.addClass("disabled");
-            }else {
-                nextPageLi.click(function () {
-                    to_page(result.extend.pageInfo.nextPage);
-                });
-                lastPageLi.click(function () {
-                    to_page(result.extend.pageInfo.pages);
-                });
-            }
-
-            url.append(firstPageLi).append(prePageLi);
-
-            $.each(result.extend.pageInfo.navigatepageNums, function (index, item) {
-                var nameLi = $("<li></li>").append($("<a></a>").append(item));
-                if(result.extend.pageInfo.pageNum == item){
-                    nameLi.addClass("active");
-                }
-                url.append(nameLi);
-                nameLi.click(function () {
-                    to_page(item);
-                });
-            })
-
-            url.append(nextPageLi).append(lastPageLi);
-
-            var navEle = $("<nav></nav>").append(url);
-
-            navEle.appendTo("#page_nav_area");
-        }
     </script>
 </head>
 <body>
+
 <!--搭建显示页面-->
 <div class="container">
     <!--标题-->
@@ -126,7 +26,7 @@
     <!--按钮-->
     <div class="row">
         <div class="col-md-4 col-md-offset-8">
-            <button class="btn btn-primary">新增</button>
+            <button class="btn btn-primary" onclick="open_modal()">新增</button>
             <button class="btn btn-danger">删除</button>
         </div>
     </div><hr>
@@ -151,14 +51,63 @@
     <!--显示分页信息-->
     <div class="row">
         <!--分页信息-->
-        <div class="col-md-6" id="page_info_area">
-
-        </div>
+        <div class="col-md-6" id="page_info_area"></div>
         <!--分页条信息-->
-        <div class="col-md-6" id="page_nav_area">
+        <div class="col-md-6" id="page_nav_area"></div>
+    </div>
+</div>
 
+<!-- 员工添加的模态框  -->
+<div class="modal fade" id="empAddModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">员工添加</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">empName</label>
+                        <div class="col-sm-10">
+                            <input name="empName" type="text" class="form-control" id="empName_add_input" placeholder="empName" onchange="validate_empName()">
+                            <span id="helpBlock1" class="help-block" style="margin: 0"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">email</label>
+                        <div class="col-sm-10">
+                            <input name="email" type="text" class="form-control" id="email_add_input" placeholder="email@qq.com" onchange="validate_email()">
+                            <span id="helpBlock2" class="help-block" style="margin: 0"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">gender</label>
+                        <div class="col-sm-10">
+                            <label class="radio-inline">
+                                <input type="radio" name="genger" id="gender1_add_input" value="M" checked>男
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="genger" id="gender2_add_input" value="F">女
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">deptName</label>
+                        <div class="col-sm-4">
+                            <select class="form-control" name="dId">
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="saveEmp()">保存</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+            </div>
         </div>
     </div>
 </div>
+
 </body>
 </html>

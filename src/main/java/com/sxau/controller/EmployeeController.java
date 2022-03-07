@@ -7,12 +7,17 @@ import com.sxau.bean.Msg;
 import com.sxau.service.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.validation.Valid;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 public class EmployeeController {
@@ -29,5 +34,37 @@ public class EmployeeController {
         List<Employee> employeeList=employeeService.getAll();
         //pageInfo封装了详细的分页信息和查询数据，传入导航页数，并将其交给页面
         return Msg.success().add("pageInfo", new PageInfo(employeeList,5));
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/emp",method = RequestMethod.POST)
+    public Msg saveEmp(@Valid Employee employee, BindingResult result){
+        if(result.hasErrors()){
+            Map<String, Object> map = new HashMap<>();
+            List<FieldError> fieldErrors = result.getFieldErrors();
+            for (FieldError fieldError : fieldErrors) {
+                System.out.println("错误的字段名："+fieldError.getField());
+                System.out.println("错误信息："+fieldError.getDefaultMessage());
+                map.put(fieldError.getField(),fieldError.getDefaultMessage());
+            }
+            return Msg.fail().add("errorFields",map);
+        }
+        if(!employeeService.checkUser(employee.getEmpName())){
+            return Msg.userHasExist();
+        }
+        employeeService.saveEmp(employee);
+        return Msg.success();
+
+    }
+
+    @ResponseBody
+    @RequestMapping("/checkUser")
+    public Msg checkUser(@RequestParam("empName") String empName){
+        boolean boo = employeeService.checkUser(empName);
+        if(boo){
+            return Msg.success();
+        }else {
+            return Msg.fail();
+        }
     }
 }

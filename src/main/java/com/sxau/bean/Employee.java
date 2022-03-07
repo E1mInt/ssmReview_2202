@@ -1,12 +1,19 @@
 package com.sxau.bean;
 
+
+import javax.validation.constraints.Pattern;
+
 public class Employee {
     private Integer empId;
 
+    @Pattern(regexp = "(^[a-zA-Z0-9_-]{6,16}$)|(^[\\u2E80-\\u9FFF]{2,5}$)",
+                message = "用户名必须为2-5位的中文或6-12位英文数字（包括_和-）的组合")
     private String empName;
 
     private String genger;
 
+    @Pattern(regexp = "^[a-z\\d]+(\\.[a-z\\d]+)*@([\\da-z](-[\\da-z])?)+(\\.{1,2}[a-z]+)+$",
+                message = "请输入正确邮箱格式")
     private String email;
 
     private Integer dId;
