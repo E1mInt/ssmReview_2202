@@ -18,6 +18,18 @@ public class Employee {
 
     private Integer dId;
 
+    @Override
+    public String toString() {
+        return "Employee{" +
+                "empId=" + empId +
+                ", empName='" + empName + '\'' +
+                ", genger='" + genger + '\'' +
+                ", email='" + email + '\'' +
+                ", dId=" + dId +
+                ", department=" + department +
+                '}';
+    }
+
     //查询员工时部门信息也查询好
     private Department department;
 

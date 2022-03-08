@@ -22,9 +22,10 @@ function build_emps_table(result) {
         var emailTd = $("<td></td>").append(item.email);
         var deptNameIdTd = $("<td></td>").append(item.department.deptName);
 
-        var editBtn = $("<button></button>").addClass("btn btn-primary btn-sm")
+        var editBtn = $("<button></button>").addClass("btn btn-primary btn-sm change_btn")
             .append("<span></span>").addClass("glyphicon glyphicon-pencil");
-        var delBtn = $("<button></button>").addClass("btn btn-danger btn-sm")
+        editBtn.attr("change_id",item.empId);
+        var delBtn = $("<button></button>").addClass("btn btn-danger btn-sm del_btn")
             .append("<span></span>").addClass("glyphicon glyphicon-trash");
         var btn = $("<td></td>").append(editBtn).append(" ").append(delBtn);
 
@@ -46,6 +47,7 @@ function build_page_info(result) {
         +result.extend.pageInfo.pages+"页，总"
         +result.extend.pageInfo.total+"条记录");
     pages=result.extend.pageInfo.pages+999;
+    currentPages=result.extend.pageInfo.pageNum;
 }
 
 //解析显示分页条
@@ -105,23 +107,24 @@ function build_page_nav(result) {
 function open_modal() {
     clean();
     //发生ajax请求查询部门信息
-    getDepts();
+    getDepts("#empAddModal select");
     //弹出模态框
     $("#empAddModal").modal({
         backdrop:"static"
     });
 }
 
-function getDepts () {
+function getDepts (ele) {
     $.ajax({
         url:"/depts",
+        async: false,
         type:"get",
         success:function (result) {
-            $("#empAddModal select").empty();
+            $(ele).empty();
             //显示下拉部门信息在下拉列表中
             $.each(result.extend.depts,function () {
                 var optionEle = $("<option></option>").append(this.deptName).attr("value",this.deptId);
-                optionEle.appendTo("#empAddModal select");
+                optionEle.appendTo(ele);
             })
         }
     })
@@ -131,7 +134,7 @@ function saveEmp() {
     if(!validate_empName()){
         return false;
     }
-    if(!validate_email()){
+    if(!validate_email($("#email_add_input"))){
         return false;
     }
     $.ajax({
@@ -154,7 +157,6 @@ function saveEmp() {
             }else if(result.code==300){
                 show_validate_msg($("#empName_add_input"),"error",result.msg);
             }
-
         }
     })
 }
@@ -185,14 +187,14 @@ function validate_empName() {
     return true;
 }
 
-function validate_email() {
-    var email=$("#email_add_input").val();
+function validate_email(ele) {
+    var email=ele.val();
     var regEmail= /^[a-z\d]+(\.[a-z\d]+)*@([\da-z](-[\da-z])?)+(\.{1,2}[a-z]+)+$/;
     if(!regEmail.test(email)){
-        show_validate_msg($("#email_add_input"),"error","请输入正确邮箱格式");
+        show_validate_msg(ele,"error","请输入正确邮箱格式");
         return false;
     }else {
-        show_validate_msg($("#email_add_input"),"success","");
+        show_validate_msg(ele,"success","");
     }
     return true;
 }
@@ -215,3 +217,55 @@ function clean() {
     $("#email_add_input").parent().removeClass("has-success has-error");
     $("#email_add_input").next("span").text("");
 }
+function cleanChange() {
+    $("#empAddModal form")[0].reset();
+    $("#email_change_input").parent().removeClass("has-success has-error");
+    $("#email_change_input").next("span").text("");
+}
+
+$(document).on("click",".change_btn",function () {
+    cleanChange();
+    //发生ajax请求查询部门信息
+    getDepts("#empChangeModal select");
+    //查询员工姓名
+    getEmp($(this).attr("change_id"));
+    $("#emp_change_btn").attr("change_id",$(this).attr("change_id"));
+    //弹出模态框
+    $("#empChangeModal").modal({
+        backdrop:"static"
+    });
+})
+
+function getEmp(id) {
+    $.ajax({
+        url: "/emp/" + id,
+        async: false,
+        type: "get",
+        success: function (result) {
+            var empData = result.extend.emp;
+            $("#empName_change_static").text(empData.empName);
+            $("#email_change_input").val(empData.email);
+            $("#empChangeModal input[name=genger]").val([empData.genger]);
+            $("#empChangeModal select").val([empData.dId]);
+        }
+    })
+}
+
+function changeEmp() {
+    if(!validate_email($("#email_change_input"))){
+        return false;
+    }
+    $.ajax({
+        url: "/emp/" + $("#emp_change_btn").attr("change_id"),
+        type: "put",
+        data:$("#empChangeModal form").serialize(),
+        success: function (result) {
+            //关闭模态框
+            $("#empChangeModal").modal('hide');
+            //请求显示最后一页数据
+            to_page(currentPages);
+        }
+    })
+}
+
+
