@@ -1,7 +1,14 @@
+function getPath(){
+    var pathName = document.location.pathname;
+    var index = pathName.substr(1).indexOf("/");
+    var result = pathName.substr(0,index+1);
+    return result;
+}
+
 function to_page(pn) {
     $("#check_all").prop("checked",false);
     $.ajax({
-        url:"/emps",
+        url:getPath()+"/emps",
         data:"pn="+pn,
         type:"get",
         success:function (result) {
@@ -120,7 +127,7 @@ function open_modal() {
 
 function getDepts (ele) {
     $.ajax({
-        url:"/depts",
+        url:getPath()+"/depts",
         async: false,
         type:"get",
         success:function (result) {
@@ -142,7 +149,7 @@ function saveEmp() {
         return false;
     }
     $.ajax({
-        url:"/emp",
+        url:getPath()+"/emp",
         data:$("#empAddModal form").serialize(),
         type:"post",
         success:function (result) {
@@ -176,7 +183,7 @@ function validate_empName() {
         show_validate_msg($("#empName_add_input"),"success","")
     }
     $.ajax({
-        url:"/checkUser",
+        url:getPath()+"/checkUser",
         data:"empName="+empName,
         type:"post",
         success:function (result) {
@@ -242,7 +249,7 @@ $(document).on("click",".change_btn",function () {
 
 function getEmp(id) {
     $.ajax({
-        url: "/emp/" + id,
+        url: getPath()+"/emp/" + id,
         async: false,
         type: "get",
         success: function (result) {
@@ -260,7 +267,7 @@ function changeEmp() {
         return false;
     }
     $.ajax({
-        url: "/emp/" + $("#emp_change_btn").attr("change_id"),
+        url: getPath()+"/emp/" + $("#emp_change_btn").attr("change_id"),
         type: "put",
         data:$("#empChangeModal form").serialize(),
         success: function (result) {
@@ -277,11 +284,11 @@ function changeEmp() {
 $(document).on("click",".del_btn",function () {
     var empName=$(this).parents("tr").find("td:eq(2)").text();
     var empId=$(this).attr("del_id");
-    if(confirm("确认删除【"+empName+"】吗?")){
+    if(confirm("确认删除【"+empName+"】吗?")) {
         $.ajax({
-            url:"/emp/"+empId,
-            type:"delete",
-            success:function (result) {
+            url: getPath() + "/emp/" + empId,
+            type: "delete",
+            success: function (result) {
                 to_page(currentPages);
             }
         })
@@ -306,13 +313,17 @@ function delete_all() {
     })
     empName=empName.trim();
     empId=empId.trim();
-    if(confirm("确认删除【"+empName+"】吗？")){
-        $.ajax({
-            url:"/emp/"+empId,
-            type:"delete",
-            success:function (result) {
-                to_page(currentPages);
-            }
-        })
+    if($(".check_item:checked").length!=0){
+        if(confirm("确认删除【"+empName+"】吗？")){
+            $.ajax({
+                url:getPath()+"/emp/"+empId,
+                type:"delete",
+                success:function (result) {
+                    to_page(currentPages);
+                }
+            })
+        }
+    }else {
+        alert("请至少选中一项再进行操作");
     }
 }
