@@ -1,4 +1,5 @@
 function to_page(pn) {
+    $("#check_all").prop("checked",false);
     $.ajax({
         url:"/emps",
         data:"pn="+pn,
@@ -16,6 +17,7 @@ function build_emps_table(result) {
     $("#emps_table tbody").empty();
     var emps = result.extend.pageInfo.list;
     $.each(emps, function (index, item) {
+        var checkBoxTd=$("<td><input type='checkbox' class='check_item'></td>");
         var empIdTd = $("<td></td>").append(item.empId);
         var empNameTd = $("<td></td>").append(item.empName);
         var genderTd = $("<td></td>").append(item.genger == 'M' ? "男" : "女");
@@ -27,9 +29,11 @@ function build_emps_table(result) {
         editBtn.attr("change_id",item.empId);
         var delBtn = $("<button></button>").addClass("btn btn-danger btn-sm del_btn")
             .append("<span></span>").addClass("glyphicon glyphicon-trash");
+        delBtn.attr("del_id",item.empId);
         var btn = $("<td></td>").append(editBtn).append(" ").append(delBtn);
 
-        $("<tr></tr>").append(empIdTd)
+        $("<tr></tr>").append(checkBoxTd)
+            .append(empIdTd)
             .append(empNameTd)
             .append(genderTd)
             .append(emailTd)
@@ -269,3 +273,46 @@ function changeEmp() {
 }
 
 
+
+$(document).on("click",".del_btn",function () {
+    var empName=$(this).parents("tr").find("td:eq(2)").text();
+    var empId=$(this).attr("del_id");
+    if(confirm("确认删除【"+empName+"】吗?")){
+        $.ajax({
+            url:"/emp/"+empId,
+            type:"delete",
+            success:function (result) {
+                to_page(currentPage);
+            }
+        })
+    }
+})
+
+$(document).on("click","#check_all",function () {
+    $(".check_item").prop("checked",$(this).prop("checked"));
+})
+
+$(document).on("click",".check_item",function () {
+    var flag=$(".check_item:checked").length==$(".check_item").length;
+    $("#check_all").prop("checked",flag);
+})
+
+function delete_all() {
+    var empName="";
+    var empId="";
+    $.each($(".check_item:checked"),function () {
+        empName+=$(this).parents("tr").find("td:eq(2)").text()+" ";
+        empId+=$(this).parents("tr").find("td:eq(1)").text()+" ";
+    })
+    empName=empName.trim();
+    empId=empId.trim();
+    if(confirm("确认删除【"+empName+"】吗？")){
+        $.ajax({
+            url:"/emp/"+empId,
+            type:"delete",
+            success:function (result) {
+                to_page(currentPages);
+            }
+        })
+    }
+}
