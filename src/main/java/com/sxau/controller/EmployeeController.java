@@ -9,12 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,5 +64,22 @@ public class EmployeeController {
         }else {
             return Msg.fail();
         }
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/emp/{ids}",method = RequestMethod.DELETE)
+    public Msg deleteEmp(@PathVariable("ids") String ids){
+        if(ids.contains(" ")){
+            List<Integer> delIds=new ArrayList<>();
+            String[] s = ids.split(" ");
+            for (String s1 : s) {
+                delIds.add(Integer.parseInt(s1));
+            }
+            employeeService.deleteBatch(delIds);
+        }else {
+            Integer i = Integer.parseInt(ids);
+            employeeService.deleteEmp(i);
+        }
+        return Msg.success();
     }
 }

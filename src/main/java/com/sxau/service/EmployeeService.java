@@ -29,4 +29,15 @@ public class EmployeeService {
         long count = employeeMapper.countByExample(employeeExample);
         return count==0;
     }
+
+    public void deleteEmp(Integer i) {
+        employeeMapper.deleteByPrimaryKey(i);
+    }
+
+    public void deleteBatch(List<Integer> delIds) {
+        EmployeeExample employeeExample = new EmployeeExample();
+        EmployeeExample.Criteria criteria = employeeExample.createCriteria();
+        criteria.andEmpIdIn(delIds);
+        employeeMapper.deleteByExample(employeeExample);
+    }
 }
