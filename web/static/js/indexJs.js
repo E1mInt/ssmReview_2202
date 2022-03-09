@@ -282,7 +282,7 @@ $(document).on("click",".del_btn",function () {
             url:"/emp/"+empId,
             type:"delete",
             success:function (result) {
-                to_page(currentPage);
+                to_page(currentPages);
             }
         })
     }
